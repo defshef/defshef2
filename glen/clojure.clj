@@ -165,7 +165,9 @@
   "filter a nested list"
   (cond
     (nil? h)  nil
-    (coll? h) (cons (deep-filter f h) (deep-filter f tail))
+    (coll? h) (if-let [inner (deep-filter f h)]
+                (cons inner (deep-filter f tail))
+                (deep-filter f tail))
     (f h)     (cons h (deep-filter f tail))
     :else     (deep-filter f tail)))
 
@@ -175,7 +177,9 @@
          acc        []]
     (cond
       (nil? h)  acc
-      (coll? h) (recur tail (conj acc (deep-filter' f h)))
+      (coll? h) (recur tail (if-let [inner (seq (deep-filter' f h))]
+                              (conj acc (vec inner))
+                              acc))
       (f h)     (recur tail (conj acc h))
       :else     (recur tail acc))))
 
@@ -203,5 +207,60 @@
 
 (defn odd-square-sum-deep
   "sum together the squres of all odd numbers in a nested list"
-  []
-  "TODO")
+  [l]
+  (->> (deep-filter odd? l)
+       (deep-map #(* % %))
+       (deep-reduce +)))
+
+(defn odd-square-sum-deep'
+  "sum together the squres of all odd numbers in a nested list"
+  [l]
+  (->> (deep-filter' odd? l)
+       (deep-map' #(* % %))
+       (deep-reduce' +)))
+
+; *********************
+; ****** Expert *******
+; *********************
+
+(defn- extract-lines
+  "all possible lines on a tic-tac-toe board"
+  [board]
+  [;rows
+   (nth board 0) (nth board 1) (nth board 2)
+   ;cols
+   (map #(nth % 0) board) (map #(nth % 1) board) (map #(nth % 2) board)
+   ; diagonals
+   [(get-in board [0 0]) (get-in board [1 1]) (get-in board [2 2])]
+   [(get-in board [0 2]) (get-in board [1 1]) (get-in board [2 0])]])
+
+(defn- three?
+  "Is this three :x or three :o?"
+  [l]
+  (cond
+    (= [:x :x :x] l) :x
+    (= [:o :o :o] l) :o
+    :else nil))
+
+(defn winner [board]
+  "Who won tic-tac-toe?"
+  (let [lines (extract-lines board)]
+    (some three? lines)))
+
+(defn defshef [expr]
+  "DSL evaluator for defshef language"
+  (cond
+    (nil? expr) expr
+    (number? expr) expr
+    (number? (first expr)) expr
+    :else (let [[action expr1 expr2] expr
+                arg1 (defshef expr1)
+                arg2 (defshef expr2)]
+            (case action
+              cowering (* 2 arg1)
+              burrito (repeat arg2 arg1)
+              tap (inc arg1)
+              steel (dec arg1)
+              sheffield (concat arg1 [arg2])
+              meatspace (first arg1)
+              geek (concat arg1 arg2)))))
