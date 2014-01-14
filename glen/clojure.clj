@@ -5,13 +5,14 @@
 ; ****************
 
 ; Normally
-(defn doubled [l]
+(defn doubled
   "double all items in a list"
+  [l]
   (map #(* % 2) l))
 
 (defn evens [l]
   "Filter out even numbers from a list"
-  (filter odd? l))
+  (filter even? l))
 
 (defn multiplied [l]
   "multiply together all numbers in a list"
@@ -19,7 +20,7 @@
 
 ; Using partial
 (def doubled (partial map (partial * 2)))
-(def evens (partial filter odd?))
+(def evens (partial filter even?))
 (def multiplied (partial reduce *))
 
 (defn reverse-list [[h & tail]]
@@ -55,9 +56,14 @@
 ; **** Beginner ****
 ; ******************
 
+(->> init
+    (f1 b c d %)
+    (f2 b c d %))
+
 (defn odd-square-sum [l]
   "sum together the squres of all odd numbers in a list"
-  (->> (filter odd? l)
+  (->> l
+       (filter odd?)
        (map #(* % %))
        (reduce +)))
 
